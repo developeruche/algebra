@@ -15,10 +15,10 @@ pub const BIGINT_WIDTH_WORDS: usize = 8;
 const OP_MULTIPLY: u32 = 0;
 
 #[inline(always)]
-pub(crate) fn modmul_uint_256(a: &BigInt<4>, b: &BigInt<4>, modulus: &BigInt<4>) -> BigInt<4> {
-    assert!(4 == BIGINT_WIDTH_WORDS);
+pub(crate) fn modmul_uint_256<const LIMBS: usize>(a: &BigInt<LIMBS>, b: &BigInt<LIMBS>, modulus: &BigInt<LIMBS>) -> BigInt<LIMBS> {
+    assert!(LIMBS == BIGINT_WIDTH_WORDS);
 
-    let result_raw = unsafe {
+    let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; LIMBS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
@@ -29,7 +29,20 @@ pub(crate) fn modmul_uint_256(a: &BigInt<4>, b: &BigInt<4>, modulus: &BigInt<4>)
         );
         out.assume_init()
     };
-    let result = BigInt::<4>::new(compress_8_lib_to_4_le(&result_raw));
+    
+    
+    // performing compression
+    let mut result_raw = [0u64; LIMBS];
+    
+    for i in 0..LIMBS {
+        // Little endian: first u32 is the low bits, second is the high bits
+        result_raw[i] = (result_pre[2 * i] as u64)
+            | ((result_pre[2 * i + 1] as u64) << 32);
+    }
+    
+    let result = BigInt::<LIMBS>::new(result_raw);
+    
+    
     assert!(bool::from(result.lt(&modulus)));
     result
 }
@@ -45,3 +58,4 @@ fn compress_8_lib_to_4_le(input: &[u32; 8]) -> [u64; 4] {
 
     result
 }
+

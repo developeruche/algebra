@@ -29,7 +29,13 @@ use zeroize::Zeroize;
 #[macro_use]
 pub mod arithmetic;
 
-mod succinct;
+
+#[cfg(all(
+    target_os = "zkvm",
+    target_vendor = "succinct",
+    target_arch = "riscv32"
+))]
+pub mod succinct;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 #[must_use]
