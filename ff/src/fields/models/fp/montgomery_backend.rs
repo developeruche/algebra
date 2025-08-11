@@ -242,6 +242,16 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     #[inline(always)]
     #[unroll_for_loops(12)]
     fn square_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &a.0, &Self::MODULUS));
+            return;
+        }
+        
         if N == 1 {
             // We default to multiplying with `a` using the `Mul` impl
             // for the N == 1 case
