@@ -125,6 +125,15 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     /// Sets `a = 2 * a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::from(2), &Self::MODULUS));
+            return;
+        }
         // This cannot exceed the backing capacity.
         let c = a.0.mul2();
         // However, it may need to be reduced.
@@ -134,15 +143,6 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
             a.subtract_modulus_with_carry(c)
         }
     }
-    
-    // #[cfg(all(
-    //     target_os = "zkvm",
-    //     target_vendor = "succinct",
-    //     target_arch = "riscv32"
-    // ))]
-    // fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
-        // a = 2 * a;
-    // }
 
     /// Sets `a = -a`.
     #[inline(always)]
