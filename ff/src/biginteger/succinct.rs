@@ -27,9 +27,9 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            uncompress_4_lib_to_8(&a.0) as *const [u32; BIGINT_WIDTH_WORDS],
-            uncompress_4_lib_to_8(&b.0) as *const [u32; BIGINT_WIDTH_WORDS],
-            uncompress_4_lib_to_8(&modulus.0) as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&a.0 as as *const [u64; 4]) as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&b.0 as as *const [u64; 4]) as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&modulus.0 as as *const [u64; 4]) as *const [u32; BIGINT_WIDTH_WORDS],
         );
         out.assume_init()
     };
