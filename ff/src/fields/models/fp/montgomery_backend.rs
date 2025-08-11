@@ -807,6 +807,16 @@ impl<T: MontConfig<N>, const N: usize> Fp<MontBackend<T, N>, N> {
     }
 
     const fn mul(self, other: &Self) -> Self {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&self.0, &other.0, &Self::MODULUS));
+            return;
+        }
+        // let tr = other.0
         let (carry, res) = self.mul_without_cond_subtract(other);
         if T::MODULUS_HAS_SPARE_BIT {
             res.const_subtract_modulus()
