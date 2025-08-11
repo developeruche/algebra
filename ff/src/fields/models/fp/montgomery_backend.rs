@@ -813,8 +813,8 @@ impl<T: MontConfig<N>, const N: usize> Fp<MontBackend<T, N>, N> {
             target_arch = "riscv32"
         ))]
         {
-            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&self.0, &other.0, &Self::MODULUS));
-            return;
+            let a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&self.0, &other.0, &Self::MODULUS));
+            return a;
         }
         // let tr = other.0
         let (carry, res) = self.mul_without_cond_subtract(other);
