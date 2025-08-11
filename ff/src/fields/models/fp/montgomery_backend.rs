@@ -122,11 +122,6 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
         a.0.sub_with_borrow(&b.0);
     }
 
-    #[cfg(not(all(
-        target_os = "zkvm",
-        target_vendor = "succinct",
-        target_arch = "riscv32"
-    )))]
     /// Sets `a = 2 * a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
