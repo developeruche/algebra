@@ -1,9 +1,15 @@
 use super::{Fp, FpConfig};
 use crate::{
-    biginteger::arithmetic as fa, BigInt, BigInteger, PrimeField, SqrtPrecomputation, Zero,
+    biginteger::{arithmetic as fa}, BigInt, BigInteger, PrimeField, SqrtPrecomputation, Zero,
 };
 use ark_ff_macros::unroll_for_loops;
 use ark_std::marker::PhantomData;
+#[cfg(all(
+    target_os = "zkvm",
+    target_vendor = "succinct",
+    target_arch = "riscv32"
+))]
+use crate::biginteger::succinct;
 
 /// A trait that specifies the constants and arithmetic procedures
 /// for Montgomery arithmetic over the prime field defined by `MODULUS`.
@@ -119,6 +125,15 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     /// Sets `a = 2 * a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32), &Self::MODULUS));
+            return;
+        }
         // This cannot exceed the backing capacity.
         let c = a.0.mul2();
         // However, it may need to be reduced.
@@ -147,7 +162,17 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     /// zero bit in the rest of the modulus.
     #[unroll_for_loops(12)]
     #[inline(always)]
-    fn mul_assign(a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
+    fn mul_assign(mut a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
+            return;
+        }
+        
         // No-carry optimisation applied to CIOS
         if Self::CAN_USE_NO_CARRY_MUL_OPT {
             if N <= 6
@@ -217,6 +242,16 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     #[inline(always)]
     #[unroll_for_loops(12)]
     fn square_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &a.0, &Self::MODULUS));
+            return;
+        }
+        
         if N == 1 {
             // We default to multiplying with `a` using the `Mul` impl
             // for the N == 1 case
