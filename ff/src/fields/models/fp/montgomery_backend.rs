@@ -131,7 +131,7 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
             target_arch = "riscv32"
         ))]
         {
-            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32)), &Self::MODULUS));
+            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32), &Self::MODULUS));
             return;
         }
         // This cannot exceed the backing capacity.
