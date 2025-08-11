@@ -116,6 +116,11 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
         a.0.sub_with_borrow(&b.0);
     }
 
+    #[cfg(not(all(
+        target_os = "zkvm",
+        target_vendor = "succinct",
+        target_arch = "riscv32"
+    )))]
     /// Sets `a = 2 * a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
@@ -128,6 +133,15 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
             a.subtract_modulus_with_carry(c)
         }
     }
+    
+    // #[cfg(all(
+    //     target_os = "zkvm",
+    //     target_vendor = "succinct",
+    //     target_arch = "riscv32"
+    // ))]
+    // fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
+        // a = 2 * a;
+    // }
 
     /// Sets `a = -a`.
     #[inline(always)]
@@ -148,6 +162,8 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     #[unroll_for_loops(12)]
     #[inline(always)]
     fn mul_assign(a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
+        a.
+        
         // No-carry optimisation applied to CIOS
         if Self::CAN_USE_NO_CARRY_MUL_OPT {
             if N <= 6
