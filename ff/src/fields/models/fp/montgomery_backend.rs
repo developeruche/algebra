@@ -716,7 +716,7 @@ impl<T: MontConfig<N>, const N: usize> Fp<MontBackend<T, N>, N> {
     /// Construct a new field element from its underlying
     /// [`struct@BigInt`] data type.
     #[inline]
-    pub const fn new(element: BigInt<N>) -> Self {
+    pub fn new(element: BigInt<N>) -> Self {
         let mut r = Self(element, PhantomData);
         if r.const_is_zero() {
             r
@@ -807,11 +807,11 @@ impl<T: MontConfig<N>, const N: usize> Fp<MontBackend<T, N>, N> {
     }
 
     fn mul(self, other: &Self) -> Self {
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
+        // #[cfg(all(
+        //     target_os = "zkvm",
+        //     target_vendor = "succinct",
+        //     target_arch = "riscv32"
+        // ))]
         {
             let a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&self.0, &other.0, &Self::MODULUS));
             return a;
