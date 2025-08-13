@@ -11,6 +11,15 @@ use ark_std::marker::PhantomData;
 ))]
 use crate::biginteger::succinct;
 
+use core::{iter, sync::atomic::{AtomicUsize, Ordering}};
+
+
+pub static ARK_ADD_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub static ARK_SUB_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub static ARK_MUL_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub static ARK_INV_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+
 /// A trait that specifies the constants and arithmetic procedures
 /// for Montgomery arithmetic over the prime field defined by `MODULUS`.
 ///
@@ -656,11 +665,21 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     const SQRT_PRECOMP: Option<crate::SqrtPrecomputation<Fp<Self, N>>> = T::SQRT_PRECOMP;
 
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::add_assign(a, b)
+        ARK_ADD_COUNT.fetch_add(1, Ordering::Relaxed);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-add");
+        T::add_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-add");
     }
 
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::sub_assign(a, b)
+        ARK_SUB_COUNT.fetch_add(1, Ordering::Relaxed);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-sub");
+        T::sub_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-sub");
     }
 
     fn double_in_place(a: &mut Fp<Self, N>) {
@@ -679,7 +698,12 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// zero bit in the rest of the modulus.
     #[inline]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::mul_assign(a, b)
+        ARK_MUL_COUNT.fetch_add(1, Ordering::Relaxed);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-mul");
+        T::mul_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-mul");
     }
 
     fn sum_of_products<const M: usize>(a: &[Fp<Self, N>; M], b: &[Fp<Self, N>; M]) -> Fp<Self, N> {
@@ -692,7 +716,13 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     }
 
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
-        T::inverse(a)
+        ARK_INV_COUNT.fetch_add(1, Ordering::Relaxed);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-inverse");
+        let out = T::inverse(a);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-inverse");
+        out
     }
 
     fn from_bigint(r: BigInt<N>) -> Option<Fp<Self, N>> {
