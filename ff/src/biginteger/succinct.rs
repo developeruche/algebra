@@ -23,7 +23,7 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     assert!(LIMBS == BIGINT_WIDTH_WORDS / 2);
 
     let result_pre = unsafe {
-        let mut out = core::mem::MaybeUninit::<[u32; LIMBS]>::uninit();
+        let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
