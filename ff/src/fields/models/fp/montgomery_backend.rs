@@ -172,6 +172,10 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     #[unroll_for_loops(12)]
     #[inline(always)]
     fn mul_assign(mut a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
+        ARK_MUL_COUNT.fetch_add(1, Ordering::Relaxed);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-mul-precomplie");
+        
         #[cfg(all(
             target_os = "zkvm",
             target_vendor = "succinct",
@@ -181,6 +185,10 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
             *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
             return;
         }
+        
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-mul-precomplie");
+        
         
         // // No-carry optimisation applied to CIOS
         // if Self::CAN_USE_NO_CARRY_MUL_OPT {
@@ -699,11 +707,11 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     #[inline]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         ARK_MUL_COUNT.fetch_add(1, Ordering::Relaxed);
-        #[cfg(feature = "std")]
-        println!("cycle-tracker-report-start: compute-mul");
+        // #[cfg(feature = "std")]
+        // println!("cycle-tracker-report-start: compute-mul");
         T::mul_assign(a, b);
-        #[cfg(feature = "std")]
-        println!("cycle-tracker-report-end: compute-mul");
+        // #[cfg(feature = "std")]
+        // println!("cycle-tracker-report-end: compute-mul");
     }
 
     fn sum_of_products<const M: usize>(a: &[Fp<Self, N>; M], b: &[Fp<Self, N>; M]) -> Fp<Self, N> {
