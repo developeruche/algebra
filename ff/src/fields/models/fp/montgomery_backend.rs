@@ -125,15 +125,6 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     /// Sets `a = 2 * a`.
     #[inline(always)]
     fn double_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
-        {
-            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32), &Self::MODULUS));
-            return;
-        }
         // This cannot exceed the backing capacity.
         let c = a.0.mul2();
         // However, it may need to be reduced.
@@ -654,6 +645,16 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     }
 
     fn double_in_place(a: &mut Fp<Self, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32), &Self::MODULUS));
+            return;
+        }
+        
         T::double_in_place(a)
     }
 
@@ -679,7 +680,6 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
             return;
         }
         
-        panic!();
         T::mul_assign(a, b);
     }
 
