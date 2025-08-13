@@ -6,6 +6,7 @@ use ark_ff_macros::unroll_for_loops;
 use ark_std::marker::PhantomData;
 
 use core::{iter, sync::atomic::{AtomicUsize, Ordering}};
+use ark_std::prelude::*;
 
 
 pub static ARK_ADD_COUNT: AtomicUsize = AtomicUsize::new(0);
@@ -674,7 +675,12 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
 
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
         ARK_INV_COUNT.fetch_add(1, Ordering::Relaxed);
-        T::inverse(a)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-inverse");
+        let out = T::inverse(a);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-inverse");
+        out
     }
 
     fn from_bigint(r: BigInt<N>) -> Option<Fp<Self, N>> {
