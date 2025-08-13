@@ -182,70 +182,70 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
             return;
         }
         
-        // No-carry optimisation applied to CIOS
-        if Self::CAN_USE_NO_CARRY_MUL_OPT {
-            if N <= 6
-                && N > 1
-                && cfg!(all(
-                    feature = "asm",
-                    target_feature = "bmi2",
-                    target_feature = "adx",
-                    target_arch = "x86_64"
-                ))
-            {
-                #[cfg(
-                    all(
-                        feature = "asm",
-                        target_feature = "bmi2",
-                        target_feature = "adx",
-                        target_arch = "x86_64"
-                    )
-                )]
-                #[allow(unsafe_code)]
-                #[rustfmt::skip]
+        // // No-carry optimisation applied to CIOS
+        // if Self::CAN_USE_NO_CARRY_MUL_OPT {
+        //     if N <= 6
+        //         && N > 1
+        //         && cfg!(all(
+        //             feature = "asm",
+        //             target_feature = "bmi2",
+        //             target_feature = "adx",
+        //             target_arch = "x86_64"
+        //         ))
+        //     {
+        //         #[cfg(
+        //             all(
+        //                 feature = "asm",
+        //                 target_feature = "bmi2",
+        //                 target_feature = "adx",
+        //                 target_arch = "x86_64"
+        //             )
+        //         )]
+        //         #[allow(unsafe_code)]
+        //         #[rustfmt::skip]
 
-                // Tentatively avoid using assembly for `N == 1`.
-                match N {
-                    2 => { ark_ff_asm::x86_64_asm_mul!(2, (a.0).0, (b.0).0); },
-                    3 => { ark_ff_asm::x86_64_asm_mul!(3, (a.0).0, (b.0).0); },
-                    4 => { ark_ff_asm::x86_64_asm_mul!(4, (a.0).0, (b.0).0); },
-                    5 => { ark_ff_asm::x86_64_asm_mul!(5, (a.0).0, (b.0).0); },
-                    6 => { ark_ff_asm::x86_64_asm_mul!(6, (a.0).0, (b.0).0); },
-                    _ => unsafe { ark_std::hint::unreachable_unchecked() },
-                };
-            } else {
-                let mut r = [0u64; N];
+        //         // Tentatively avoid using assembly for `N == 1`.
+        //         match N {
+        //             2 => { ark_ff_asm::x86_64_asm_mul!(2, (a.0).0, (b.0).0); },
+        //             3 => { ark_ff_asm::x86_64_asm_mul!(3, (a.0).0, (b.0).0); },
+        //             4 => { ark_ff_asm::x86_64_asm_mul!(4, (a.0).0, (b.0).0); },
+        //             5 => { ark_ff_asm::x86_64_asm_mul!(5, (a.0).0, (b.0).0); },
+        //             6 => { ark_ff_asm::x86_64_asm_mul!(6, (a.0).0, (b.0).0); },
+        //             _ => unsafe { ark_std::hint::unreachable_unchecked() },
+        //         };
+        //     } else {
+        //         let mut r = [0u64; N];
 
-                for i in 0..N {
-                    let mut carry1 = 0u64;
-                    r[0] = fa::mac(r[0], (a.0).0[0], (b.0).0[i], &mut carry1);
+        //         for i in 0..N {
+        //             let mut carry1 = 0u64;
+        //             r[0] = fa::mac(r[0], (a.0).0[0], (b.0).0[i], &mut carry1);
 
-                    let k = r[0].wrapping_mul(Self::INV);
+        //             let k = r[0].wrapping_mul(Self::INV);
 
-                    let mut carry2 = 0u64;
-                    fa::mac_discard(r[0], k, Self::MODULUS.0[0], &mut carry2);
+        //             let mut carry2 = 0u64;
+        //             fa::mac_discard(r[0], k, Self::MODULUS.0[0], &mut carry2);
 
-                    for j in 1..N {
-                        r[j] = fa::mac_with_carry(r[j], (a.0).0[j], (b.0).0[i], &mut carry1);
-                        r[j - 1] = fa::mac_with_carry(r[j], k, Self::MODULUS.0[j], &mut carry2);
-                    }
-                    r[N - 1] = carry1 + carry2;
-                }
-                (a.0).0.copy_from_slice(&r);
-            }
-            a.subtract_modulus();
-        } else {
-            // Alternative implementation
-            // Implements CIOS.
-            let (carry, res) = a.mul_without_cond_subtract(b);
-            *a = res;
+        //             for j in 1..N {
+        //                 r[j] = fa::mac_with_carry(r[j], (a.0).0[j], (b.0).0[i], &mut carry1);
+        //                 r[j - 1] = fa::mac_with_carry(r[j], k, Self::MODULUS.0[j], &mut carry2);
+        //             }
+        //             r[N - 1] = carry1 + carry2;
+        //         }
+        //         (a.0).0.copy_from_slice(&r);
+        //     }
+        //     a.subtract_modulus();
+        // } else {
+        //     // Alternative implementation
+        //     // Implements CIOS.
+        //     let (carry, res) = a.mul_without_cond_subtract(b);
+        //     *a = res;
 
-            if Self::MODULUS_HAS_SPARE_BIT {
-                a.subtract_modulus_with_carry(carry);
-            } else {
-                a.subtract_modulus();
-            }
-        }
+        //     if Self::MODULUS_HAS_SPARE_BIT {
+        //         a.subtract_modulus_with_carry(carry);
+        //     } else {
+        //         a.subtract_modulus();
+        //     }
+        // }
     }
 
     #[inline(always)]
