@@ -678,8 +678,18 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// `P::MODULUS` has (a) a non-zero MSB, and (b) at least one
     /// zero bit in the rest of the modulus.
     #[inline]
-    fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::mul_assign(a, b)
+    fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {       
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
+            return;
+        }
+
+        T::mul_assign(a, b);
     }
 
     fn sum_of_products<const M: usize>(a: &[Fp<Self, N>; M], b: &[Fp<Self, N>; M]) -> Fp<Self, N> {
