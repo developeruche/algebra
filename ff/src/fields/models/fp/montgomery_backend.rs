@@ -222,17 +222,7 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
 
     #[inline(always)]
     #[unroll_for_loops(12)]
-    fn square_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {
-        // #[cfg(all(
-        //     target_os = "zkvm",
-        //     target_vendor = "succinct",
-        //     target_arch = "riscv32"
-        // ))]
-        // {
-        //     *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &a.0, &Self::MODULUS));
-        //     return;
-        // }
-        
+    fn square_in_place(a: &mut Fp<MontBackend<Self, N>, N>) {        
         if N == 1 {
             // We default to multiplying with `a` using the `Mul` impl
             // for the N == 1 case
@@ -637,11 +627,19 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     const SQRT_PRECOMP: Option<crate::SqrtPrecomputation<Fp<Self, N>>> = T::SQRT_PRECOMP;
 
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::add_assign(a, b)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-add");
+        T::add_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-add");
     }
 
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::sub_assign(a, b)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-sub");
+        T::sub_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-sub");
     }
 
     fn double_in_place(a: &mut Fp<Self, N>) {        
@@ -687,7 +685,12 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     }
 
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
-        T::inverse(a)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-inverse");
+        let out = T::inverse(a);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-inverse");
+        out
     }
 
     fn from_bigint(r: BigInt<N>) -> Option<Fp<Self, N>> {
