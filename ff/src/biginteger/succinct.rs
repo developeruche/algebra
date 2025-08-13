@@ -20,7 +20,7 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     b: &BigInt<LIMBS>,
     modulus: &BigInt<LIMBS>,
 ) -> BigInt<LIMBS> {
-    assert!(LIMBS == BIGINT_WIDTH_WORDS);
+    assert!(LIMBS == BIGINT_WIDTH_WORDS / 2);
 
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; LIMBS]>::uninit();
