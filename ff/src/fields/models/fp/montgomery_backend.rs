@@ -162,17 +162,7 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     /// zero bit in the rest of the modulus.
     #[unroll_for_loops(12)]
     #[inline(always)]
-    fn mul_assign(mut a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
-        {
-            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
-            return;
-        }
-        
+    fn mul_assign(mut a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {      
         // No-carry optimisation applied to CIOS
         if Self::CAN_USE_NO_CARRY_MUL_OPT {
             if N <= 6
@@ -688,7 +678,8 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
             *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
             return;
         }
-
+        
+        panic!();
         T::mul_assign(a, b);
     }
 
