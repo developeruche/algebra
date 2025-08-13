@@ -18,6 +18,7 @@ ark-ec = { workspace = true }
 ark-std = { workspace = true }
 ark-r1cs-std = { workspace = true, optional = true }
 
+
 [dev-dependencies]
 ark-serialize = { workspace = true }
 ark-algebra-test-templates = { workspace = true }
@@ -31,6 +32,7 @@ std = [ "ark-std/std", "ark-ff/std", "ark-ec/std", "ark-r1cs-std?/std" ]
 r1cs = [ "ark-r1cs-std" ]
 curve = [ "scalar_field" ]
 scalar_field = []
+asm = [ "ark-ff/asm" ]
 
 [[bench]]
 name = "bn254"

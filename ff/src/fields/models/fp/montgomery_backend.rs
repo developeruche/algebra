@@ -5,6 +5,14 @@ use crate::{
 use ark_ff_macros::unroll_for_loops;
 use ark_std::marker::PhantomData;
 
+use core::{iter, sync::atomic::{AtomicUsize, Ordering}};
+
+
+pub static ARK_ADD_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub static ARK_SUB_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub static ARK_MUL_COUNT: AtomicUsize = AtomicUsize::new(0);
+pub static ARK_INV_COUNT: AtomicUsize = AtomicUsize::new(0);
+
 /// A trait that specifies the constants and arithmetic procedures
 /// for Montgomery arithmetic over the prime field defined by `MODULUS`.
 ///
@@ -625,10 +633,12 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     const SQRT_PRECOMP: Option<crate::SqrtPrecomputation<Fp<Self, N>>> = T::SQRT_PRECOMP;
 
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+        ARK_ADD_COUNT.fetch_add(1, Ordering::Relaxed);
         T::add_assign(a, b)
     }
 
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+        ARK_SUB_COUNT.fetch_add(1, Ordering::Relaxed);
         T::sub_assign(a, b)
     }
 
@@ -648,6 +658,7 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// zero bit in the rest of the modulus.
     #[inline]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
+        ARK_MUL_COUNT.fetch_add(1, Ordering::Relaxed);
         T::mul_assign(a, b)
     }
 
@@ -662,6 +673,7 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     }
 
     fn inverse(a: &Fp<Self, N>) -> Option<Fp<Self, N>> {
+        ARK_INV_COUNT.fetch_add(1, Ordering::Relaxed);
         T::inverse(a)
     }
 
