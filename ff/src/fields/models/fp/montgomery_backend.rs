@@ -635,12 +635,20 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
 
     fn add_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         ARK_ADD_COUNT.fetch_add(1, Ordering::Relaxed);
-        T::add_assign(a, b)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-add");
+        T::add_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-add");
     }
 
     fn sub_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         ARK_SUB_COUNT.fetch_add(1, Ordering::Relaxed);
-        T::sub_assign(a, b)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-sub");
+        T::sub_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-sub");
     }
 
     fn double_in_place(a: &mut Fp<Self, N>) {
@@ -660,7 +668,11 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     #[inline]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
         ARK_MUL_COUNT.fetch_add(1, Ordering::Relaxed);
-        T::mul_assign(a, b)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-mul");
+        T::mul_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-mul");
     }
 
     fn sum_of_products<const M: usize>(a: &[Fp<Self, N>; M], b: &[Fp<Self, N>; M]) -> Fp<Self, N> {
