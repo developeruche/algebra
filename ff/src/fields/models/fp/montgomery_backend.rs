@@ -645,15 +645,15 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     }
 
     fn double_in_place(a: &mut Fp<Self, N>) {
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
-        {
-            *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32), &Self::MODULUS));
-            return;
-        }
+        // #[cfg(all(
+        //     target_os = "zkvm",
+        //     target_vendor = "succinct",
+        //     target_arch = "riscv32"
+        // ))]
+        // {
+        //     *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &BigInt::<N>::from(2u32), &Self::MODULUS));
+        //     return;
+        // }
         
         T::double_in_place(a)
     }
@@ -689,6 +689,15 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
 
     #[inline]
     fn square_in_place(a: &mut Fp<Self, N>) {
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &a.0, &Self::MODULUS));
+            return;
+        }
         T::square_in_place(a)
     }
 
