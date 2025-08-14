@@ -653,17 +653,17 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
         #[cfg(feature = "std")]
         println!("cycle-tracker-report-start: compute-mul");
         
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
-        {
-            *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
-            #[cfg(feature = "std")]
-            println!("cycle-tracker-report-end: compute-mul");
-            return;
-        }
+        // #[cfg(all(
+        //     target_os = "zkvm",
+        //     target_vendor = "succinct",
+        //     target_arch = "riscv32"
+        // ))]
+        // {
+        //     *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
+        //     #[cfg(feature = "std")]
+        //     println!("cycle-tracker-report-end: compute-mul");
+        //     return;
+        // }
         
         
         T::mul_assign(a, b);
