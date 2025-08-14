@@ -24,21 +24,13 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
 
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
-        let a_from = uncompress_4_lib_to_8(&a.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS];
-        let b_from = uncompress_4_lib_to_8(&b.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS];
-        let modulus_from = uncompress_4_lib_to_8(&modulus.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS];
-        
-        #[cfg(feature = "std")]
-        println!("cycle-tracker-report-start: compute-mul");
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            a_from,
-            b_from,
-            modulus_from,
+            uncompress_4_lib_to_8(&a.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&b.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&modulus.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
         );
-        #[cfg(feature = "std")]
-        println!("cycle-tracker-report-end: compute-mul");
         out.assume_init()
     };
 
