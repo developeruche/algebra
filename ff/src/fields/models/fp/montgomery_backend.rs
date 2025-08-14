@@ -162,17 +162,7 @@ pub trait MontConfig<const N: usize>: 'static + Sync + Send + Sized {
     /// zero bit in the rest of the modulus.
     #[unroll_for_loops(12)]
     #[inline(always)]
-    fn mul_assign(mut a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
-        {
-            *a = Fp::<MontBackend<Self, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
-            return;
-        }
-        
+    fn mul_assign(a: &mut Fp<MontBackend<Self, N>, N>, b: &Fp<MontBackend<Self, N>, N>) {
         // No-carry optimisation applied to CIOS
         if Self::CAN_USE_NO_CARRY_MUL_OPT {
             if N <= 6
@@ -679,7 +669,25 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// zero bit in the rest of the modulus.
     #[inline]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        T::mul_assign(a, b)
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-start: compute-mul");
+        
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
+            #[cfg(feature = "std")]
+            println!("cycle-tracker-report-end: compute-mul");
+            return;
+        }
+        
+        
+        T::mul_assign(a, b);
+        #[cfg(feature = "std")]
+        println!("cycle-tracker-report-end: compute-mul");
     }
 
     fn sum_of_products<const M: usize>(a: &[Fp<Self, N>; M], b: &[Fp<Self, N>; M]) -> Fp<Self, N> {
