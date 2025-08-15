@@ -22,43 +22,34 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
 ) -> BigInt<LIMBS> {
     assert!(LIMBS == BIGINT_WIDTH_WORDS / 2);
     
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-start: compute-mul-uncompress");
     
-    let a_op = uncompress_4_lib_to_8(&a.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS];
-    let b_op = uncompress_4_lib_to_8(&b.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS];
-    let modulus_op = uncompress_4_lib_to_8(&modulus.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS];
-    
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-end: compute-mul-uncompress");
 
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            a_op,
-            b_op,
-            modulus_op,
+            uncompress_4_lib_to_8(&a.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&b.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
+            uncompress_4_lib_to_8(&modulus.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
         );
         out.assume_init()
     };
 
     // performing compression
+    // #[cfg(feature = "std")]
+    println!("cycle-tracker-report-start: compute-mul-compress");
     let mut result_raw = [0u64; LIMBS];
 
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-start: compute-mul-compress");
-    
     for i in 0..LIMBS {
         // Little endian: first u32 is the low bits, second is the high bits
         result_raw[i] = (result_pre[2 * i] as u64) | ((result_pre[2 * i + 1] as u64) << 32);
     }
+
+    let result = BigInt::<LIMBS>::new(result_raw);
     
     #[cfg(feature = "std")]
     println!("cycle-tracker-report-end: compute-mul-compress");
-
-    let result = BigInt::<LIMBS>::new(result_raw);
 
     assert!(bool::from(result.lt(&modulus)));
     result
