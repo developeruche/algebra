@@ -37,7 +37,7 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     };
 
     // performing compression
-    // #[cfg(feature = "std")]
+    #[cfg(feature = "std")]
     println!("cycle-tracker-report-start: compute-mul-compress");
     let mut result_raw = [0u64; LIMBS];
 
