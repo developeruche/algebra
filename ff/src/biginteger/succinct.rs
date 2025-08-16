@@ -35,7 +35,7 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            &(std::mem::transmute_copy(&a0) as [u32; 8]),
+            &(std::mem::transmute_copy(&a.0) as [u32; 8]),
             &(std::mem::transmute_copy(&b.0) as [u32; 8]),
             &(std::mem::transmute_copy(&modulus.0 as [u32; 8]))
         );
