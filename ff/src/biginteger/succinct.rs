@@ -35,9 +35,9 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            a_0,
-            b_0,
-            modulus_0
+            &a_0,
+            &b_0,
+            &modulus_0
         );
         out.assume_init()
     };
