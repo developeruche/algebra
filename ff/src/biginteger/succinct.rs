@@ -23,46 +23,48 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     assert!(LIMBS == BIGINT_WIDTH_WORDS / 2);
     
     
+    #[cfg(feature = "std")]
+    println!("cycle-tracker-report-start: compute-mul-compress");
     
     let mut result_raw = [0u64; LIMBS];
+    
+    let a_op = unsafe {  };
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            uncompress_4_lib_to_8(&a.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
-            uncompress_4_lib_to_8(&b.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
-            uncompress_4_lib_to_8(&modulus.0).as_ptr() as *const [u32; BIGINT_WIDTH_WORDS],
+            &*(&a.0 as *const [u64; 4] as *const [u32; 8]) ,
+            &*(&b.0 as *const [u64; 4] as *const [u32; 8]) ,
+            &*(&modulus.0 as *const [u64; 4] as *const [u32; 8])
         );
         out.assume_init()
     };
-    
+
+    #[cfg(feature = "std")]
+    println!("cycle-tracker-report-end: compute-mul-compress");
 
     // performing compression
-    
-
-    for i in 0..LIMBS {
-        // Little endian: first u32 is the low bits, second is the high bits
-        result_raw[i] = (result_pre[2 * i] as u64) | ((result_pre[2 * i + 1] as u64) << 32);
-    }
-
+    let result_raw = unsafe { &*(result_pre as *const [u32; 8] as *const [u64; 4]) };
     let result = BigInt::<LIMBS>::new(result_raw);
     
+
+    // for i in 0..LIMBS {
+    //     // Little endian: first u32 is the low bits, second is the high bits
+    //     result_raw[i] = (result_pre[2 * i] as u64) | ((result_pre[2 * i + 1] as u64) << 32);
+    // }
+
+    // let result = BigInt::<LIMBS>::new(result_raw);
     
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-start: compute-mul-compress-assert");
+    
+
     assert!(bool::from(result.lt(&modulus)));
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-end: compute-mul-compress-assert");
     result
 }
 
 /// Uncompresses an array of 4 u64 values into an array of 8 u32 values using little-endian representation.
 /// This is the inverse operation of compress_8_lib_to_4.
 fn uncompress_4_lib_to_8<const NUM_LIMBS: usize>(input_u64s: &[u64; NUM_LIMBS]) -> [u32; 8] {
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-start: compute-mul-compress");
-    
     assert_eq!(
         NUM_LIMBS, 4,
         "This function is only designed for NUM_LIMBS=4"
@@ -75,9 +77,6 @@ fn uncompress_4_lib_to_8<const NUM_LIMBS: usize>(input_u64s: &[u64; NUM_LIMBS]) 
         // Extract the higher 32 bits
         result_u32s[2 * i + 1] = (input_u64s[i] >> 32) as u32;
     }
-    
-    #[cfg(feature = "std")]
-    println!("cycle-tracker-report-end: compute-mul-compress");
 
     result_u32s
 }
