@@ -46,7 +46,7 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     println!("cycle-tracker-report-end: compute-mul-compress");
 
     // performing compression
-    let result_raw: [u64; 4] = unsafe { std::mem::transmute_copy(&result_pre) };
+    let result_raw: [u64; LIMBS] = unsafe { std::mem::transmute_copy(&result_pre) };
     let result = BigInt::<LIMBS>::new(result_raw);
     
 
