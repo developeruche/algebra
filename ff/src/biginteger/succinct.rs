@@ -26,18 +26,18 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     
     let mut result_raw = [0u64; LIMBS];
     
-    // let a_0: [u32; 8] = unsafe { std::mem::transmute_copy(&a.0) };
-    // let b_0: [u32; 8] = unsafe { std::mem::transmute_copy(&b.0) };
-    // let modulus_0: [u32; 8] = unsafe { std::mem::transmute_copy(&modulus.0) };
+    let a_0: [u32; 8] = unsafe { std::mem::transmute_copy(&a.0) };
+    let b_0: [u32; 8] = unsafe { std::mem::transmute_copy(&b.0) };
+    let modulus_0: [u32; 8] = unsafe { std::mem::transmute_copy(&modulus.0) };
     
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            &(std::mem::transmute_copy(&a.0) as [u32; 8]),
-            &(std::mem::transmute_copy(&b.0) as [u32; 8]),
-            &(std::mem::transmute_copy(&modulus.0) as [u32; 8])
+            &a_0,
+            &b_0,
+            &modulus_0
         );
         out.assume_init()
     };
@@ -46,16 +46,16 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     println!("cycle-tracker-report-end: compute-mul-compress");
 
     // performing compression
-    // let result_raw = unsafe { &*(result_pre as *const [u32; 8] as *const [u64; 4]) };
-    // let result = BigInt::<LIMBS>::new(result_raw);
+    let result_raw: [u64; 4] = unsafe { std::mem::transmute_copy(&result_pre) };
+    let result = BigInt::<LIMBS>::new(result_raw);
     
 
-    for i in 0..LIMBS {
-        // Little endian: first u32 is the low bits, second is the high bits
-        result_raw[i] = (result_pre[2 * i] as u64) | ((result_pre[2 * i + 1] as u64) << 32);
-    }
+    // for i in 0..LIMBS {
+    //     // Little endian: first u32 is the low bits, second is the high bits
+    //     result_raw[i] = (result_pre[2 * i] as u64) | ((result_pre[2 * i + 1] as u64) << 32);
+    // }
 
-    let result = BigInt::<LIMBS>::new(result_raw);
+    // let result = BigInt::<LIMBS>::new(result_raw);
     
     
 
