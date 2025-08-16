@@ -37,7 +37,7 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
             OP_MULTIPLY,
             &(std::mem::transmute_copy(&a.0) as [u32; 8]),
             &(std::mem::transmute_copy(&b.0) as [u32; 8]),
-            &(std::mem::transmute_copy(&modulus.0 as [u32; 8]))
+            &(std::mem::transmute_copy(&modulus.0) as [u32; 8])
         );
         out.assume_init()
     };
