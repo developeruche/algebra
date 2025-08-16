@@ -15,25 +15,27 @@ pub const BIGINT_WIDTH_WORDS: usize = 8;
 const OP_MULTIPLY: u32 = 0;
 
 #[inline(always)]
-pub(crate) fn modmul_uint_256(
-    a: &BigInt<4>,
-    b: &BigInt<4>,
-    modulus: &BigInt<4>,
-) -> BigInt<4> {
+pub(crate) fn modmul_uint_256<const LIMBS: usize>(
+    a: &BigInt<LIMBS>,
+    b: &BigInt<LIMBS>,
+    modulus: &BigInt<LIMBS>,
+) -> BigInt<LIMBS> {   
+    
     #[cfg(feature = "std")]
     println!("cycle-tracker-report-start: compute-mul-compress");
     
-    let mut result_raw = [0u64; 4];
+    let mut result_raw = [0u64; LIMBS];
     
-
+    // let out: [u32; 8] = unsafe {  };
+    
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            &*(&a.0 as *const [u64; 4] as *const [u32; 8]) ,
-            &*(&b.0 as *const [u64; 4] as *const [u32; 8]) ,
-            &*(&modulus.0 as *const [u64; 4] as *const [u32; 8])
+            std::mem::transmute_copy(&a.0),
+            std::mem::transmute_copy(&b.0),
+            std::mem::transmute_copy(&modulus.0)
         );
         out.assume_init()
     };
@@ -42,16 +44,16 @@ pub(crate) fn modmul_uint_256(
     println!("cycle-tracker-report-end: compute-mul-compress");
 
     // performing compression
-    // let result_raw = unsafe { &*(&result_pre as *const [u32; 8] as *const [u64; 4]) };
-    // let result = BigInt::<4>::new(*result_raw);
+    // let result_raw = unsafe { &*(result_pre as *const [u32; 8] as *const [u64; 4]) };
+    // let result = BigInt::<LIMBS>::new(result_raw);
     
 
-    for i in 0..4 {
+    for i in 0..LIMBS {
         // Little endian: first u32 is the low bits, second is the high bits
         result_raw[i] = (result_pre[2 * i] as u64) | ((result_pre[2 * i + 1] as u64) << 32);
     }
 
-    let result = BigInt::<4>::new(result_raw);
+    let result = BigInt::<LIMBS>::new(result_raw);
     
     
 
