@@ -26,18 +26,18 @@ pub(crate) fn modmul_uint_256<const LIMBS: usize>(
     
     let mut result_raw = [0u64; LIMBS];
     
-    let a_0: [u32; 8] = unsafe { std::mem::transmute_copy(&a.0) };
-    let b_0: [u32; 8] = unsafe { std::mem::transmute_copy(&b.0) };
-    let modulus_0: [u32; 8] = unsafe { std::mem::transmute_copy(&modulus.0) };
+    // let a_0: [u32; 8] = unsafe { std::mem::transmute_copy(&a.0) };
+    // let b_0: [u32; 8] = unsafe { std::mem::transmute_copy(&b.0) };
+    // let modulus_0: [u32; 8] = unsafe { std::mem::transmute_copy(&modulus.0) };
     
     let result_pre = unsafe {
         let mut out = core::mem::MaybeUninit::<[u32; BIGINT_WIDTH_WORDS]>::uninit();
         sys_bigint(
             out.as_mut_ptr() as *mut [u32; BIGINT_WIDTH_WORDS],
             OP_MULTIPLY,
-            &a_0,
-            &b_0,
-            &modulus_0
+            &(std::mem::transmute_copy(&a0) as [u32; 8]),
+            &(std::mem::transmute_copy(&b.0) as [u32; 8]),
+            &(std::mem::transmute_copy(&modulus.0 as [u32; 8]))
         );
         out.assume_init()
     };
