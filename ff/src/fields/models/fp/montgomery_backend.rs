@@ -650,8 +650,6 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
     /// zero bit in the rest of the modulus.
     #[inline]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        #[cfg(feature = "std")]
-        println!("cycle-tracker-report-start: compute-mul");
         
         #[cfg(all(
             target_os = "zkvm",
@@ -660,15 +658,11 @@ impl<T: MontConfig<N>, const N: usize> FpConfig<N> for MontBackend<T, N> {
         ))]
         {
             *a = Fp::<MontBackend<T, N>, N>::new(succinct::modmul_uint_256(&a.0, &b.0, &Self::MODULUS));
-            #[cfg(feature = "std")]
-            println!("cycle-tracker-report-end: compute-mul");
             return;
         }
         
         
         T::mul_assign(a, b);
-        #[cfg(feature = "std")]
-        println!("cycle-tracker-report-end: compute-mul");
     }
 
     fn sum_of_products<const M: usize>(a: &[Fp<Self, N>; M], b: &[Fp<Self, N>; M]) -> Fp<Self, N> {
